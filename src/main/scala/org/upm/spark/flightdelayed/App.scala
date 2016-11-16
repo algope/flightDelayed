@@ -13,6 +13,7 @@ object App {
     val data = sc.textFile("hdfs:///tmp/book/98.txt")
     val numAs = data.filter(line => line.contains("a")).count()
     val numBs = data.filter(line => line.contains("b")).count()
+    val text = "TEST"
     println(s"Lines with a: ${numAs}, Lines with b: ${numBs}")
   }
 }
