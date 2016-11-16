@@ -2,8 +2,8 @@
 <project version="4">
   <component name="WebServers">
     <option name="servers">
-      <webServer id="b51d1195-8b0b-4b98-be1a-3def8a90fa5b" name="BlueMix - HW" url="http://13.93.109.59">
-        <fileTransfer host="13.93.109.59" port="22" rootFolder="/home/hortonworks/deployments" accessType="SFTP">
+      <webServer id="b51d1195-8b0b-4b98-be1a-3def8a90fa5b" name="BlueMix - HW" url="http://13.73.167.217">
+        <fileTransfer host="13.73.167.217" port="22" rootFolder="/home/hortonworks/deployments" accessType="SFTP">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" />
           </advancedOptions>
