@@ -37,6 +37,17 @@ object App {
         //Split each document’s text into words.
         //Convert each document’s words into a numerical feature vector.
         //Learn a prediction model using the feature vectors and labels.
+      //MLlib represents such a workflow as a Pipeline, which consists of a sequence of PipelineStages (Transformers and Estimators) to be run in a specific order
+      //A Pipeline is specified as a sequence of stages (Transformer or Estimator)
+        //Stages are run in order
+       //The input DataFrame is transformed as it passes through each stage
+        //For Transformer stages, the transform() method is called on the DataFrame
+        //For Estimator stages, the fit() method is called to produce a Transformer, and that Transformer’s transform() method is called on the DataFrame
+      //A Pipeline is an Estimator
+      //After a Pipeline’s fit() method runs, it produces a PipelineModel, which is a Transformer
+      //This PipelineModel is used at test time
+
+    val split = inputData.randomSplit(Array(0.7,0.3)) //70% for training 30% for test
 
 
   }
