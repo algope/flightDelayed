@@ -17,7 +17,7 @@ object App {
   def main(args: Array[String]) {
     Logger.getRootLogger().setLevel(Level.WARN)
     val inputPath = args{0}
-    val conf = new SparkConf().setAppName("My first Spark application")
+    val conf = new SparkConf().setAppName("flightDelayed")
     val sc = new SparkContext(conf)
 
     //val data = sc.textFile("hdfs:///tmp/data/2008.csv")
@@ -32,28 +32,30 @@ object App {
       .option("inferSchema", "true")
       .option("delimiter", ";")
       .load("/FileStore/tables/okqu8mhe1481897675184/test3.csv") //.csv("csv/file/path") //spark 2.0 api
-      .withColumn("target", $"ArrDelay".cast("int"));
+      .withColumn("target", $"ArrDelay".cast("int"))
 
-    val dataClean = inputData.drop(inputData.col("ArrTime"))
-      .drop(inputData.col("ActualElapsedTime"))
-      .drop(inputData.col("AirTime"))
-      .drop(inputData.col("TaxiIn"))
-      .drop(inputData.col("Diverted"))
-      .drop(inputData.col("CarrierDelay"))
-      .drop(inputData.col("WeatherDelay"))
-      .drop(inputData.col("NASDelay"))
-      .drop(inputData.col("SecurityDelay"))
-      .drop(inputData.col("LateAircraftDelay"))
-      .drop(inputData.col("CancellationCode"))
-      .drop(inputData.col("TailNum"))
-      .drop(inputData.col("Origin"))
-      .drop(inputData.col("Dest"))
+    val clean = inputData.where("ArrDelay is not null and ArrDelay != 'NA'")
+    val firstClean = clean.where("Cancelled = 0")
+
+
+    val dataClean = firstClean.drop(inputData.col("ArrTime"))
+      .drop(firstClean.col("ActualElapsedTime"))
+      .drop(firstClean.col("AirTime"))
+      .drop(firstClean.col("TaxiIn"))
+      .drop(firstClean.col("Diverted"))
+      .drop(firstClean.col("CarrierDelay"))
+      .drop(firstClean.col("WeatherDelay"))
+      .drop(firstClean.col("NASDelay"))
+      .drop(firstClean.col("SecurityDelay"))
+      .drop(firstClean.col("LateAircraftDelay"))
+      .drop(firstClean.col("Cancelled"))
+      .drop(firstClean.col("CancellationCode"))
       .drop()
 
-    val analysisData  = dataClean.withColumn("DepDelay", dataClean("DepDelay").cast(IntegerType))
+    val analysisData  = dataClean
+      .withColumn("DepDelay", dataClean("DepDelay").cast(IntegerType))
       .withColumn("TaxiOut", dataClean("TaxiOut").cast(IntegerType))
       .withColumn("CRSElapsedTime", dataClean("CRSElapsedTime").cast(IntegerType))
-      .withColumn("Year", dataClean("Year").cast(IntegerType))
       .withColumn("Month", dataClean("Month").cast(IntegerType))
       .withColumn("DayofMonth", dataClean("DayofMonth").cast(IntegerType))
       .withColumn("DayOfWeek", dataClean("DayOfWeek").cast(IntegerType))
@@ -63,19 +65,24 @@ object App {
       .withColumn("FlightNum", dataClean("FlightNum").cast(IntegerType))
       .withColumn("ArrDelay", dataClean("ArrDelay").cast(IntegerType))
       .withColumn("Distance", dataClean("Distance").cast(IntegerType))
-      .withColumn("Cancelled", dataClean("Cancelled").cast(IntegerType))
-      .withColumn("target", dataClean("target").cast(DoubleType))
+      .withColumn("target", dataClean("target").cast(IntegerType))
 
 
     val categoricalVariables = Array("UniqueCarrier")
     val categoricalIndexers = categoricalVariables
-      .map(i => new StringIndexer().setInputCol(i).setOutputCol(i+"Index"))
+      .map(i => new StringIndexer()
+        .setInputCol(i)
+        .setOutputCol(i+"Index"))
     val categoricalEncoders = categoricalVariables
-      .map(e => new OneHotEncoder().setInputCol(e + "Index").setOutputCol(e + "Vec"))
+      .map(e => new OneHotEncoder()
+        .setInputCol(e + "Index")
+        .setOutputCol(e + "Vec"))
+
 
     val assembler = new VectorAssembler()
-      .setInputCols(Array("UniqueCarrierVec", "DepDelay", "TaxiOut", "CRSElapsedTime"))
+      .setInputCols(Array("UniqueCarrierVec","DepDelay","TaxiOut","CRSElapsedTime"))
       .setOutputCol("features")
+
 
     val lr = new LinearRegression()
       .setLabelCol("target")
@@ -97,7 +104,7 @@ object App {
 
     val cleanAnalysisData = analysisData.where("Cancelled = 0 and ArrDelay is not null")
 
-    val Array(training, test) = cleanAnalysisData.randomSplit(Array(0.75, 0.25)) //75% for training 25% for test
+    val Array(training, test) = analysisData.randomSplit(Array(0.7, 0.3))
 
 
     val model = tvs.fit(training)
@@ -105,8 +112,11 @@ object App {
 
     val holdout = model.transform(test).select("prediction", "target")
 
-    val rm = new RegressionMetrics(holdout.rdd.map(x =>
-      (x(0).asInstanceOf[Double], x(1).asInstanceOf[Double])))
+    var holdoutRes = holdout
+      .withColumn("target", holdout("target").cast(DoubleType))
+      .withColumn("prediction", holdout("prediction").cast(DoubleType))
+
+    val rm = new RegressionMetrics(holdoutRes.rdd.map(x => (x(0).asInstanceOf[Double], x(1).asInstanceOf[Double])))
 
     println("MSE: " + rm.meanSquaredError)
     println("R Squared: " + rm.r2)
@@ -127,7 +137,6 @@ object App {
     //TODO: This are the most significant variables:
     //DepDelay
     //TaxiOut
-    //AirTime
     //CRSElapsedTime
 
     //TODO: THIS IS REGRESSION MODEL
