@@ -16,7 +16,9 @@ import org.apache.log4j.{Level, Logger}
 object App {
   def main(args: Array[String]) {
     Logger.getRootLogger().setLevel(Level.WARN)
-    val inputPath = args{0}
+    val inputPath = args {
+      0
+    }
     val conf = new SparkConf().setAppName("flightDelayed")
     val sc = new SparkContext(conf)
 
@@ -52,7 +54,7 @@ object App {
       .drop(firstClean.col("CancellationCode"))
       .drop()
 
-    val analysisData  = dataClean
+    val analysisData = dataClean
       .withColumn("DepDelay", dataClean("DepDelay").cast(IntegerType))
       .withColumn("TaxiOut", dataClean("TaxiOut").cast(IntegerType))
       .withColumn("CRSElapsedTime", dataClean("CRSElapsedTime").cast(IntegerType))
@@ -72,7 +74,7 @@ object App {
     val categoricalIndexers = categoricalVariables
       .map(i => new StringIndexer()
         .setInputCol(i)
-        .setOutputCol(i+"Index"))
+        .setOutputCol(i + "Index"))
     val categoricalEncoders = categoricalVariables
       .map(e => new OneHotEncoder()
         .setInputCol(e + "Index")
@@ -80,7 +82,7 @@ object App {
 
 
     val assembler = new VectorAssembler()
-      .setInputCols(Array("UniqueCarrierVec","DepDelay","TaxiOut","CRSElapsedTime"))
+      .setInputCols(Array("UniqueCarrierVec", "DepDelay", "TaxiOut", "CRSElapsedTime"))
       .setOutputCol("features")
 
 
