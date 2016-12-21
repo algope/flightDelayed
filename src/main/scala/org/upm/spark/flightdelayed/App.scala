@@ -22,8 +22,13 @@ object App {
 
     //val data = sc.textFile("hdfs:///tmp/data/2008.csv")
     //val data = sc.textFile(inputPath)
-
-    val sparkSQL = SparkSession.builder().enableHiveSupport().getOrCreate()
+    //val warehouseLocation = "spark-warehouse"
+    val sparkSQL = SparkSession
+      .builder()
+      .enableHiveSupport()
+      .appName("flightDelayed")
+      //.config("spark.sql.warehouse.dir", warehouseLocation) //Avoiding weird AlreadyExistsException(message:Database default already exists)
+      .getOrCreate()
 
     val inputDataRaw1 = sparkSQL.read
       .format("com.databricks.spark.csv")
@@ -151,3 +156,6 @@ object App {
 
   }
 }
+
+
+///opt/spark2/bin/spark-submit --master yarn --class org.upm.spark.flightdelayed.App flightdelayed-1.0.jar hdfs:///tmp/data/2008.csv
