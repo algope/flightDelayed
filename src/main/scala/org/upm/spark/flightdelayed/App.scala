@@ -9,12 +9,14 @@ import org.apache.spark.mllib.evaluation.RegressionMetrics
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DoubleType, IntegerType}
+import org.apache.log4j.{Level, Logger}
 
 object App {
   def main(args: Array[String]) {
     val inputPath = args {
       0
     }
+    Logger.getRootLogger().setLevel(Level.WARN)
     //val conf = new SparkConf().setAppName("flightDelayed")
     //val sc = new SparkContext(conf)
 
@@ -28,7 +30,7 @@ object App {
       .option("header", "true") //reading the headers
       .option("mode", "DROPMALFORMED")
       .option("inferSchema", "true")
-      .option("delimiter", ";")
+      .option("delimiter", ",")
       .load(inputPath) //.csv("csv/file/path") //spark 2.0 api
 
     val inputDataRaw = inputDataRaw1.withColumn("target", inputDataRaw1("ArrDelay").cast("int"))
