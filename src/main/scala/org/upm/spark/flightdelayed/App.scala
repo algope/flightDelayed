@@ -38,6 +38,8 @@ object App {
       .option("delimiter", ",")
       .load(inputPath) //.csv("csv/file/path") //spark 2.0 api
 
+
+
     val inputDataRaw = inputDataRaw1.withColumn("target", inputDataRaw1("ArrDelay").cast("int"))
 
     val firstCleanRaw = inputDataRaw.where("Cancelled = 0")
